@@ -1,8 +1,7 @@
-#![allow(dead_code)]
-
 extern crate encoding;
 #[macro_use]
-extern crate json;
+extern crate serde_derive;
+extern crate serde_json;
 
 mod yeelight;
 
