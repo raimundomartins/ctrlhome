@@ -147,3 +147,21 @@ impl CommandMessage {
         self.id = id;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_toggle() {
+        let cmd = CommandMessage::new_toggle(5);
+        assert_eq!(serde_json::to_string(&cmd).unwrap(), r#"{"id":5,"method":"toggle","params":[]}"#);
+    }
+
+    #[test]
+    fn test_rgb() {
+        let cmd = CommandMessage::new_set_rgb(7, 50, 20, 10, TransitionEffect::Sudden);
+        assert_eq!(serde_json::to_string(&cmd).unwrap(), r#"{"id":7,"method":"set_rgb","params":[3281930,"sudden",0]}"#);
+    }
+}
