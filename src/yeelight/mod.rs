@@ -1,5 +1,3 @@
-use ::errors::*;
-
 #[derive(Serialize)]
 #[serde(untagged)]
 enum CommandParameter {
@@ -41,7 +39,43 @@ pub enum TransitionEffect {
     Smooth{duration: i32},
 }
 
-pub enum PowerOnMode { Normal, CT, RGB, HSV, Flow, Night }
+pub enum PowerOnMode { Normal = 0, CT, RGB, HSV, Flow, Night }
+
+pub enum ColorMode { RGB = 1, Temperature, HSV }
+
+pub enum Property {
+    Power(bool),
+    Brightness(u8),              // 0 ~ 100
+    Temperature(u16),            // 1700 ~ 6500 (K)
+    RGB(u32),                    // 1 ~ 16777215
+    Hue(u16),                    // 0 ~ 359
+    Sat(u8),                     // 0 ~ 100
+    ColorMode(ColorMode),
+    Flowing(bool),
+    DelayOff(u8),                // 0 ~ 60 (minutes): Remaining time of a sleep timer
+    FlowParameters(Vec<String>), // ??
+    MusicOn(bool),
+    Name(String),
+}
+
+impl Property {
+    fn type_name(&self) -> &'static str {
+        match *self {
+            Property::Power(_v) => "power",
+            Property::Brightness(_v) => "bright",
+            Property::Temperature(_v) => "ct",
+            Property::RGB(_v) => "rgb",
+            Property::Hue(_v) => "hue",
+            Property::Sat(_v) => "sat",
+            Property::ColorMode(ref _v) => "color_mode",
+            Property::Flowing(_v) => "flowing",
+            Property::DelayOff(_v) => "delayoff",
+            Property::FlowParameters(ref _v) => "flow_params",
+            Property::MusicOn(_v) => "music_on",
+            Property::Name(ref _v) => "name",
+        }
+    }
+}
 
 impl Into<Vec<CommandParameter>> for TransitionEffect {
     fn into(self) -> Vec<CommandParameter> {
@@ -63,8 +97,8 @@ impl From<Option<PowerOnMode>> for CommandParameter {
 
 
 impl CommandMessage {
-    pub fn new_get_prop(id: i32, params: &Vec<&str>) -> CommandMessage {
-        let params: Vec<_> = params.iter().map(|&x| x.into()).collect();
+    pub fn new_get_prop(id: i32, params: &Vec<Property>) -> CommandMessage {
+        let params: Vec<_> = params.iter().map(|x| x.type_name().into()).collect();
         CommandMessage { id, method: "get_prop", params }
     }
 
