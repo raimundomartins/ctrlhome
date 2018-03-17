@@ -1,9 +1,4 @@
-use std::error;
-use std::io::prelude::{Read,Write};
-use std::net::TcpStream;
-use encoding::{Encoding, EncoderTrap, DecoderTrap};
-use encoding::all::ASCII;
-use serde_json;
+use ::errors::*;
 
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -117,18 +112,4 @@ impl CommandMessage {
     pub fn set_id(&mut self, id: i32) {
         self.id = id;
     }
-
-    pub fn send(&self, stream: &mut TcpStream) -> Result<String, Box<error::Error+Send+Sync>> {
-        let command = serde_json::to_string(&self).map(|v| v+"\r\n")?;
-        let command_bytes = ASCII.encode(&command, EncoderTrap::Strict).map_err(|x| x.into_owned())?;
-
-        stream.write_all(&command_bytes)?;
-        println!("Sent: {:?}", command_bytes);
-
-        let mut response = [0; 1024];
-        stream.read(&mut response[..])?;
-
-        Ok(ASCII.decode(&response, DecoderTrap::Strict)?)
-    }
 }
-
