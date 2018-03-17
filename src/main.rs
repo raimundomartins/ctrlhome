@@ -55,23 +55,28 @@ fn main() {
 }
 
 fn send_command(stream: &mut TcpStream, command: yeelight::CommandMessage) -> Result<String> {
-    let cmd = serde_json::to_string(&command)
+    let mut cmd = serde_json::to_string(&command)
                         .chain_err(|| "Failed to create JSON command")?;
+    cmd += "\r\n";
+    if cfg!(debug_assertions) {
+        println!("Sending: {}", cmd);
+    }
     let cmd_bytes = ASCII.encode(&cmd, EncoderTrap::Strict)
              .map_err(|e| Error::from_kind(ErrorKind::InvalidEncodingConversion(e.into())))
              .chain_err(|| "Failed to ASCII encode command")?;
 
     stream.write_all(&cmd_bytes).chain_err(|| "Failed to send command to server")?;
-    if cfg!(feature="debug") {
-        println!("Sent: {:?}", cmd_bytes);
-    }
 
     let mut response = [0; 1024];
     stream.read(&mut response[..]).chain_err(|| "Failed to read server response")?;
 
-    ASCII.decode(&response, DecoderTrap::Strict)
+    let resp_ascii = ASCII.decode(&response, DecoderTrap::Strict)
          .map_err(|e| Error::from_kind(ErrorKind::InvalidEncodingConversion(e.into())))
-         .chain_err(|| "Failed to ASCII decode server response")
+         .chain_err(|| "Failed to ASCII decode server response")?;
+    if cfg!(debug_assertions) {
+        println!("Received: {}", resp_ascii);
+    }
+    Ok(resp_ascii)
 }
 
 fn run() -> Result<()> {/*
@@ -84,7 +89,9 @@ fn run() -> Result<()> {/*
     };*/
 
     let mut stream = TcpStream::connect(HOST).chain_err(|| format!("Failed to connect to {}", HOST))?;
-    send_command(&mut stream, yeelight::CommandMessage::new_toggle(0))
-                 .chain_err(|| "Failed to send command to server")?;
+    send_command(&mut stream, yeelight::CommandMessage::new_set_rgb(0, 50, 20, 10, yeelight::TransitionEffect::Sudden))
+                 .chain_err(|| "Failed to SetRGB command to server")?;
+    send_command(&mut stream, yeelight::CommandMessage::new_toggle(1))
+                 .chain_err(|| "Failed to Toggle command to server")?;
     Ok(())
 }
