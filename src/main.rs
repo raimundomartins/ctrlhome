@@ -1,11 +1,9 @@
 // `error_chain!` can recurse
 #![recursion_limit = "64"]
 
-#[macro_use]
-extern crate error_chain;
+#[macro_use] extern crate error_chain;
 extern crate encoding;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
 extern crate serde_json;
 
 mod yeelight;
